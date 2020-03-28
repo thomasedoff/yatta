@@ -1,0 +1,23 @@
+body {
+        background-color: #111;
+        color: #ddd;
+}
+
+tr:nth-child(odd) {
+        background-color: #222
+}
+
+th {
+        background-color: #111;
+}
+
+input {
+  color: #ddd;
+  background: #111;
+  border-bottom: 2px #222 solid;
+}
+
+#submit {
+  background: #222;
+  color: #ddd;
+}

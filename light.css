@@ -1,0 +1,40 @@
+body {
+        background-color: #fff;
+        color: #007eb1;
+}
+
+tr:nth-child(odd) {
+        background-color: #f0f8fa;
+}
+
+th {
+        background-color: #fff;
+}
+
+input {
+  color: #007eb1;
+  background: #f0f8fa;
+  border-bottom: 2px #ddedf1 solid;
+}
+
+input:disabled {
+  background: #eee;
+  color: #ddd;
+}
+
+input[type="text"]::-ms-input-placeholder {
+  color: #6fb7d3;
+}
+
+#submit, #apiKeyHelper {
+  background: #009ddb;
+  color: #fff;
+}
+
+.apiKeyHelper--ok {
+  background: #28a745 !important;
+}
+
+.apiKeyHelper--error {
+  background: #dc3545 !important;
+}
