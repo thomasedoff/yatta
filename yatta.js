@@ -274,7 +274,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // go!
   if (settings = loadSettings()) {
-    //getDepartures();
+    getDepartures();
   } else {
     console.log("No init!")
     document.getElementById("welcome").classList.remove("invisible");
