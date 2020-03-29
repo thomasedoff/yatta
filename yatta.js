@@ -39,18 +39,7 @@ getStops = function(stop) {
     if (xhr.status === 401) {
       getAccessToken();
     } else if (xhr.status === 200 && Array.isArray(json.LocationList.StopLocation)) {
-      var options = "";
-      for (var suggestion of json.LocationList.StopLocation) {
-        options += "<option value='" + suggestion.name + "'></option>";
-      }
-      document.getElementById("suggestions").innerHTML = options;
-
-      // Populate stopId if a match is found
-      if (object = json.LocationList.StopLocation.find(o => o.name.toLowerCase() === document.getElementById("stopName").value.toLowerCase())) {
-        document.getElementById("stopId").value = object.id;
-      } else {
-        document.getElementById("stopId").value = "";
-      }
+      generateDataList(json.LocationList.StopLocation);
     } else {
       console.log("No stops!")
     }
@@ -67,73 +56,88 @@ getDepartures = function() {
   xhr.setRequestHeader("Authorization", "Bearer " + localStorage.getItem("accessToken"));
   xhr.send(null);
 
-  xhr.addEventListener("error", function() {
-    document.getElementById("table").innerHTML = "";
-  });
-
   xhr.addEventListener("loadend", function() {
     var json = JSON.parse(xhr.response);
     if (xhr.status === 401) {
       getAccessToken(getDepartures);
     } else if (xhr.status === 200 && !json.DepartureBoard.error) {
-      sortDepartures(json);
+      sortDepartures(json.DepartureBoard);
     } else {
       console.log("No departures!")
     }
   });
 };
 
-// Extracts relevant entries to a new object
-sortDepartures = function(json) {
+// Filter matching departures
+sortDepartures = function(allDepartures) {
   console.log("sortDepartures")
-  var ServerDatetime = moment(json.DepartureBoard.serverdate + " " + json.DepartureBoard.servertime, "YYYY-MM-DD HH:mm");
-
-  var departures = [];
-  for (var departure in json.DepartureBoard.Departure) {
+  var ServerDatetime = moment(allDepartures.serverdate + " " + allDepartures.servertime, "YYYY-MM-DD HH:mm");
+  var i = 0;
+  var filteredDepartures = [];
+  for (var departure in allDepartures.Departure) {
     // Use rtTime if exists, calculate minutes left, use specified format
-    var dynamicTime = json.DepartureBoard.Departure[departure].rtTime ? json.DepartureBoard.Departure[departure].rtTime : json.DepartureBoard.Departure[departure].time;
-    var absoluteDepartureDatetime = moment(json.DepartureBoard.Departure[departure].date + " " + dynamicTime, "YYYY-MM-DD HH:mm")
+    var dynamicTime = allDepartures.Departure[departure].rtTime ? allDepartures.Departure[departure].rtTime : allDepartures.Departure[departure].time;
+    var absoluteDepartureDatetime = moment(allDepartures.Departure[departure].date + " " + dynamicTime, "YYYY-MM-DD HH:mm")
     var relativedepartureTime = parseInt(moment.duration(absoluteDepartureDatetime.diff(ServerDatetime)).asMinutes());
     var departureTime = settings.absoluteTime ? dynamicTime : relativedepartureTime;
 
     // Only traverse departures on specific tracks
     if (
-      (settings.tracks.includes(json.DepartureBoard.Departure[departure].track) || settings.tracks.length === 0) &&
-      (settings.lines.includes(json.DepartureBoard.Departure[departure].sname) || settings.lines.length === 0)
+      (settings.tracks.includes(allDepartures.Departure[departure].track) || settings.tracks.length === 0) &&
+      (settings.lines.includes(allDepartures.Departure[departure].sname) || settings.lines.length === 0) &&
+      (i < settings.maxRows || !settings.maxRows)
     ) {
       if (!settings.absoluteTime && departureTime <= 0) departureTime = "Now";
-      if (json.DepartureBoard.Departure[departure].cancelled) departureTime = "Cancelled"
+      if (allDepartures.Departure[departure].cancelled) departureTime = "Cancelled"
 
       if (settings.groupDepartures) {
         // Append to existing line if it already exists
-        var object = departures.find(o => o.Line === json.DepartureBoard.Departure[departure].sname) && departures.find(o => o.Destination === json.DepartureBoard.Departure[departure].direction);
+        var object = filteredDepartures.find(o => o.Line === allDepartures.Departure[departure].sname) && filteredDepartures.find(o => o.Destination === allDepartures.Departure[departure].direction);
         if (object && object.Next === "") object.Next = departureTime;
         if (!object) {
-          departures.push({"Line": json.DepartureBoard.Departure[departure].sname,
-                          "Destination": json.DepartureBoard.Departure[departure].direction,
+          filteredDepartures.push({"Line": allDepartures.Departure[departure].sname,
+                          "Destination": allDepartures.Departure[departure].direction,
                           "Departure": departureTime, "Next": "",
-                          "Track": json.DepartureBoard.Departure[departure].track,
-                          "color": json.DepartureBoard.Departure[departure].bgColor,
-                          "background": json.DepartureBoard.Departure[departure].fgColor}
+                          "Track": allDepartures.Departure[departure].track,
+                          "color": allDepartures.Departure[departure].bgColor,
+                          "background": allDepartures.Departure[departure].fgColor}
                         );
         }
       } else {
         // Otherwise simply populate with current
-        departures.push({"Line": json.DepartureBoard.Departure[departure].sname,
-                        "Destination": json.DepartureBoard.Departure[departure].direction,
+        filteredDepartures.push({"Line": allDepartures.Departure[departure].sname,
+                        "Destination": allDepartures.Departure[departure].direction,
                         "Departure": departureTime,
-                        "Track": json.DepartureBoard.Departure[departure].track,
-                        "color": json.DepartureBoard.Departure[departure].bgColor,
-                        "background": json.DepartureBoard.Departure[departure].fgColor});
+                        "Track": allDepartures.Departure[departure].track,
+                        "color": allDepartures.Departure[departure].bgColor,
+                        "background": allDepartures.Departure[departure].fgColor});
       }
+      i++;
     }
   };
 
-  document.getElementById("clock").innerText = json.DepartureBoard.servertime;
-  generateTable(departures);
+  document.getElementById("clock").innerText = allDepartures.servertime;
+  generateTable(filteredDepartures);
 }
 
-// Generates HTML table
+// Generate HTML datalist
+generateDataList = function(locations) {
+  console.log("generateDataList");
+  var options = "";
+  for (var location of locations) {
+    options += "<option value='" + location.name + "'></option>";
+  }
+  document.getElementById("locations").innerHTML = options;
+
+  // Populate stopId if a match is found
+  if (object = locations.find(o => o.name.toLowerCase() === document.getElementById("stopName").value.toLowerCase())) {
+    document.getElementById("stopId").value = object.id;
+  } else {
+    document.getElementById("stopId").value = "";
+  }
+}
+
+// Generate HTML table
 generateTable = function(departures) {
   console.log("generateTable");
   var tbody = "<tbody><tr><th>Line</th>"
@@ -164,15 +168,17 @@ generateTable = function(departures) {
 loadSettings = function() {
   console.log("loadSettings");
   if (settings = JSON.parse(localStorage.getItem("settings"))) {
+    // Lazy ...
     for (var setting in settings) {
       if (typeof settings[setting] === "boolean") document.getElementById(setting).checked = settings[setting];
       if (Array.isArray(settings[setting])) document.getElementById(setting).value = settings[setting].toString();
       if (typeof settings[setting] === "string" || typeof settings[setting] === "number") document.getElementById(setting).value = settings[setting];
     }
-    document.getElementById("dark").media = settings.darkTheme ? "" : "none";
+
     if (settings.apiKey && settings.stopId && settings.tracks && settings.lines && settings.updateInterval) {
       clearInterval(window.loop);
       window.loop = setInterval(getDepartures, settings.updateInterval * 1000);
+      document.getElementById("dark").media = settings.darkTheme ? "" : "none";
       return settings;
     }
   }
@@ -188,6 +194,7 @@ saveSettings = function() {
   settings.stopId = parseInt(document.getElementById("stopId").value);
   settings.lines = document.getElementById("lines").value ? document.getElementById("lines").value.replace(/\s+/, "").split(",") : [];
   settings.tracks = document.getElementById("tracks").value ? document.getElementById("tracks").value.toUpperCase().replace(/\s+/, "").split(",") : [];
+  settings.maxRows = parseInt(document.getElementById("maxRows").value) || 10;
   settings.updateInterval = parseInt(document.getElementById("updateInterval").value) || 30;
 
   settings.blinkClock = document.getElementById("blinkClock").checked ? true : false;

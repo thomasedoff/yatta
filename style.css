@@ -1,14 +1,12 @@
 /* COMMON */
 
 html {
-  height: 100%;
-
   overflow-y: scroll;
 }
 
 body {
   font-family: verdana;
-  font-size: calc(1em + 1vw);
+  font-size: calc(1em + 1vw); /* 2.016vw = 192px lines */
   padding-top: 4vh;
   box-sizing: border-box;
   margin: 0 auto;

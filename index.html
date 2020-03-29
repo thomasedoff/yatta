@@ -7,12 +7,12 @@
     <!--
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-  -->
+    -->
     <link rel="manifest" href="./manifest.json">
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" id="light" href="./light.css">
     <link rel="stylesheet" id="dark" media="none" href="./dark.css">
-    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="icon" type="image/png" href="./yatta-192x192.png">
     <script src="./moment.js"></script>
     <script src="./yatta.js"></script>
   </head>
@@ -41,21 +41,17 @@
           <h2>Settings</h2>
           <label for="apiKey">API Key</label>
           <div class="setting--row">
-            <input id="apiKey" type="text" name="apiKey" pattern="[A-z0-9]{76}" value="" required">
+            <input id="apiKey" type="text" name="apiKey" pattern="[A-z0-9]{76}" value="" required="required">
             <input id="apiKeyHelper" type="button" value="Verify">
           </div>
           <span id="apiKeyHelper-normal" class="helper">76-character Västtrafik API key</span>
         </div>
         <div class="setting">
           <label for="stopName">Stop name</label>
-          <input id="stopName" name="suggestions" list="suggestions" placeholder="SKF, Göteborg">
-          <datalist id="suggestions"></datalist>
-          <span class="helper">Search for stop</span>
-        </div>
-        <div class="setting">
-          <label for="stopId">Stop ID</label>
-          <input id="stopId" type="text" name="stopId" pattern="[0-9]{16}" placeholder="9021014005862000" required disabled>
-          <span class="helper">16-digit stop ID</span>
+          <input id="stopName" name="suggestions" list="locations" placeholder="SKF, Göteborg" required="required">
+          <datalist id="locations"></datalist>
+          <input id="stopId" type="text" name="stopId" pattern="[0-9]{16}" placeholder="" required="required" disabled="disabled">
+          <span class="helper">Name of stop to monitor</span>
         </div>
         <div class="setting">
           <label for="tracks">Included tracks (optional)</label>
@@ -68,16 +64,21 @@
           <span class="helper">Comma-separated list of lines</span>
         </div>
         <div class="setting">
+          <label for="maxRows">Maximum rows (optional)</label>
+          <input id="maxRows" type="text" name="maxRows" placeholder="10" pattern="[0-9]{1,}">
+          <span class="helper">Maximum number of rows (default 10)</span>
+        </div>
+        <div class="setting">
           <label for="updateInterval">Update interval (optional)</label>
           <input id="updateInterval" type="text" name="updateInterval" pattern="[0-9]{2,}" placeholder="30">
           <span class="helper">Update interval (default 30s)</span>
         </div>
         <div class="setting setting--row">
-          <input id="blinkClock" type="checkbox" name="blinkClock" checked>
+          <input id="blinkClock" type="checkbox" name="blinkClock" checked="checked">
           <label for="blinkClock">Blink clock on refresh</label>
         </div>
         <div class="setting setting--row">
-          <input id="groupDepartures" type="checkbox" name="groupDepartures" checked>
+          <input id="groupDepartures" type="checkbox" name="groupDepartures" checked="checked">
           <label for="groupDepartures">Group lines together</label>
         </div>
         <div class="setting setting--row">
@@ -101,9 +102,4 @@
         </div>
       </form>
     </div>
-    <script>
-    if('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js');
-    };
-    </script>
   </body>
