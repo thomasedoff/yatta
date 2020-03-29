@@ -3,6 +3,15 @@ body {
         color: #007eb1;
 }
 
+a {
+  color: #007eb1;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
 tr:nth-child(odd) {
         background-color: #f0f8fa;
 }
@@ -17,24 +26,21 @@ input {
   border-bottom: 2px #ddedf1 solid;
 }
 
-input:disabled {
-  background: #eee;
-  color: #ddd;
-}
-
-input[type="text"]::-ms-input-placeholder {
-  color: #6fb7d3;
-}
-
-#submit, #apiKeyHelper {
+#submit, #apiKeyHelper, #stopNameHelper {
   background: #009ddb;
   color: #fff;
 }
 
-.apiKeyHelper--ok {
+input:disabled {
+  background: #eee;
+  color: #ddd;
+  cursor: default !important;
+}
+
+.helper--ok {
   background: #28a745 !important;
 }
 
-.apiKeyHelper--error {
+.helper--error {
   background: #dc3545 !important;
 }

@@ -1,43 +1,52 @@
+// Default settings
+const defaultSettings = {
+  "apiKey": "eUdRM0JjQXB4cDIxc0wxcWlhRjFrNTdaWG9NYTp4VG1GSTRYS3Nrakw4bVowRWF0RzNReFlEX2dh",
+  "deviceId": Math.random().toString(36).substr(2, 9),
+  "stopName": "Centralstationen, Göteborg",
+  "stopId": 9021014001950000,
+  "lines": [],
+  "tracks": [],
+  "maxRows": 10,
+  "updateInterval": 30
+}
+
+
 // Authenticate to VT API
 getAccessToken = function(callback) {
   console.log("getAccessToken");
-  if (!settings) return false;
-  if (!localStorage.getItem("deviceId")) localStorage.setItem("deviceId", Math.random().toString(36).substr(2, 9));
-
+  console.log(settings);
   var xhr = new XMLHttpRequest();
   xhr.open("POST", "https://api.vasttrafik.se:443/token");
   xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
   xhr.setRequestHeader("Authorization", "Basic " + settings.apiKey);
-  xhr.send("grant_type=client_credentials&scope=device_" + localStorage.getItem("deviceId"));
+  xhr.send("grant_type=client_credentials&scope=device_" + settings.deviceId);
 
   xhr.addEventListener("loadend", function() {
-    var json = JSON.parse(xhr.response);
-    if (xhr.status === 200 && json.access_token) {
-      localStorage.setItem("accessToken", json.access_token);
-      apiKeyHelper(true)
+    if (xhr.status === 200) {
+      localStorage.setItem("accessToken", JSON.parse(xhr.response).access_token);
+      updateHelper(document.getElementById("apiKeyHelper"), true);
       if (callback && typeof callback === "function") {
         console.log("callback:" + callback.name);
         callback();
       }
     } else {
-      apiKeyHelper(false)
+      updateHelper(document.getElementById("apiKeyHelper"), false);
       console.log("No auth!")
     }
   });
 };
 
 // Fetch stops
-getStops = function(stop) {
-  console.log("getStops")
+getStops = function(stopName) {
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", "https://api.vasttrafik.se/bin/rest.exe/v2/location.name?input=" + stop + "&format=json");
+  xhr.open("GET", "https://api.vasttrafik.se/bin/rest.exe/v2/location.name?input=" + stopName + "&format=json");
   xhr.setRequestHeader("Authorization", "Bearer " + localStorage.getItem("accessToken"));
   xhr.send(null);
 
   xhr.addEventListener("loadend", function() {
     var json = JSON.parse(xhr.response);
     if (xhr.status === 401) {
-      getAccessToken();
+      getAccessToken(null);
     } else if (xhr.status === 200 && Array.isArray(json.LocationList.StopLocation)) {
       generateDataList(json.LocationList.StopLocation);
     } else {
@@ -72,8 +81,8 @@ getDepartures = function() {
 sortDepartures = function(allDepartures) {
   console.log("sortDepartures")
   var ServerDatetime = moment(allDepartures.serverdate + " " + allDepartures.servertime, "YYYY-MM-DD HH:mm");
-  var i = 0;
   var filteredDepartures = [];
+  var i = 0;
   for (var departure in allDepartures.Departure) {
     // Use rtTime if exists, calculate minutes left, use specified format
     var dynamicTime = allDepartures.Departure[departure].rtTime ? allDepartures.Departure[departure].rtTime : allDepartures.Departure[departure].time;
@@ -132,8 +141,10 @@ generateDataList = function(locations) {
   // Populate stopId if a match is found
   if (object = locations.find(o => o.name.toLowerCase() === document.getElementById("stopName").value.toLowerCase())) {
     document.getElementById("stopId").value = object.id;
+    updateHelper(document.getElementById("stopNameHelper"), true);
   } else {
-    document.getElementById("stopId").value = "";
+      updateHelper(document.getElementById("stopNameHelper"), false);
+
   }
 }
 
@@ -165,65 +176,58 @@ generateTable = function(departures) {
 }
 
 // Load settings
-loadSettings = function() {
+loadSettings = function(defaultSettings) {
   console.log("loadSettings");
-  if (settings = JSON.parse(localStorage.getItem("settings"))) {
-    // Lazy ...
-    for (var setting in settings) {
-      if (typeof settings[setting] === "boolean") document.getElementById(setting).checked = settings[setting];
-      if (Array.isArray(settings[setting])) document.getElementById(setting).value = settings[setting].toString();
-      if (typeof settings[setting] === "string" || typeof settings[setting] === "number") document.getElementById(setting).value = settings[setting];
-    }
-
-    if (settings.apiKey && settings.stopId && settings.tracks && settings.lines && settings.updateInterval) {
-      clearInterval(window.loop);
-      window.loop = setInterval(getDepartures, settings.updateInterval * 1000);
-      document.getElementById("dark").media = settings.darkTheme ? "" : "none";
-      return settings;
-    }
+  var settings = localStorage.getItem("settings") ? JSON.parse(localStorage.getItem("settings")) : defaultSettings;
+    // Populate HTML fields
+  for (var setting in settings) {
+    if (typeof settings[setting] === "boolean") document.getElementById(setting).checked = settings[setting];
+    if (Array.isArray(settings[setting])) document.getElementById(setting).value = settings[setting].toString();
+    if (typeof settings[setting] === "string" || typeof settings[setting] === "number") document.getElementById(setting).value = settings[setting];
   }
-  console.log("No load!");
+
+  clearInterval(window.loop);
+  window.loop = setInterval(getDepartures, settings.updateInterval * 1000);
+  document.getElementById("dark").media = settings.darkTheme ? "" : "none";
+  localStorage.setItem("settings", JSON.stringify(settings));
+  return settings;
 }
 
 // Save settings
-saveSettings = function() {
+saveSettings = function(defaultSettings) {
   console.log("saveSettings");
   var settings = {};
   settings.apiKey = document.getElementById("apiKey").value;
-  settings.stopName = document.getElementById("stopName").value;
-  settings.stopId = parseInt(document.getElementById("stopId").value);
-  settings.lines = document.getElementById("lines").value ? document.getElementById("lines").value.replace(/\s+/, "").split(",") : [];
-  settings.tracks = document.getElementById("tracks").value ? document.getElementById("tracks").value.toUpperCase().replace(/\s+/, "").split(",") : [];
-  settings.maxRows = parseInt(document.getElementById("maxRows").value) || 10;
-  settings.updateInterval = parseInt(document.getElementById("updateInterval").value) || 30;
+  settings.deviceId = localStorage.getItem("deviceId") || defaultSettings.deviceId;
+  settings.stopName = document.getElementById("stopName").value || defaultSettings.stopName;
+  settings.stopId = parseInt(document.getElementById("stopId").value) || defaultSettings.stopId;
 
+  settings.lines = document.getElementById("lines").value ? document.getElementById("lines").value.replace(/\s+/, "").split(",") : defaultSettings.lines;
+  settings.tracks = document.getElementById("tracks").value ? document.getElementById("tracks").value.toUpperCase().replace(/\s+/, "").split(",") : defaultSettings.tracks;
+  settings.maxRows = parseInt(document.getElementById("maxRows").value) || defaultSettings.maxRows;
+  settings.updateInterval = parseInt(document.getElementById("updateInterval").value) || defaultSettings.updateInterval;
+
+  // These defaults are set in index.html
   settings.blinkClock = document.getElementById("blinkClock").checked ? true : false;
   settings.groupDepartures = document.getElementById("groupDepartures").checked ? true : false;
   settings.absoluteTime = document.getElementById("absoluteTime").checked ? true : false;
   settings.showDestinations = document.getElementById("showDestinations").checked ? true : false;
   settings.showTracks = document.getElementById("showTracks").checked ? true : false;
   settings.darkTheme = document.getElementById("darkTheme").checked ? true : false;
-
-  if (settings.apiKey && settings.stopId && settings.tracks && settings.lines && settings.updateInterval) {
-    localStorage.setItem("settings", JSON.stringify(settings));
-    return settings;
-  } else {
-    console.log("No save!");
-  }
+  localStorage.setItem("settings", JSON.stringify(settings));
 }
 
-// apiKeyHelper
-apiKeyHelper = function(success) {
-  console.log("apiKeyHelper");
+// updateHelper
+updateHelper = function(element, success) {
+  console.log("updateHelper");
   if (success) {
-    document.getElementById("apiKeyHelper").value = "OK";
-    document.getElementById("apiKeyHelper").classList.add("apiKeyHelper--ok");
-    document.getElementById("apiKeyHelper").classList.remove("apiKeyHelper--error");
+    element.value = "✓"
+    element.classList.add("helper--ok");
+    element.classList.remove("helper--error");
   } else {
-    document.getElementById("apiKeyHelper").value = "Error"
-    document.getElementById("apiKeyHelper").classList.remove("apiKeyHelper--ok");
-    document.getElementById("apiKeyHelper").classList.add("apiKeyHelper--error");
-
+    element.value = "✗"
+    element.classList.remove("helper--ok");
+    element.classList.add("helper--error");
   }
 }
 
@@ -250,38 +254,35 @@ document.addEventListener("DOMContentLoaded", function() {
   });
 
   // apiKey
-  document.getElementById("apiKeyHelper").addEventListener("click", function() {
-    if (document.getElementById("apiKey").validity.valid) {
-      // Temporary settings
-      localStorage.setItem("settings", JSON.stringify({"apiKey": document.getElementById("apiKey").value}));
-      settings = JSON.parse(localStorage.getItem("settings"));
-      getAccessToken();
+  document.getElementById("apiKey").addEventListener("input", function() {
+    if (this.validity.valid) {
+      settings.apiKey = this.value;
+      getAccessToken(null);
     }
   });
 
   // stopName
   document.getElementById("stopName").addEventListener("input", function(e) {
-    if (localStorage.getItem("accessToken")) {
+    if (localStorage.getItem("accessToken") && this.validity.valid) {
       getStops(this.value);
-    } else {
-      apiKeyHelper(false);
     }
   });
 
   // save
   document.getElementById("settings-form").addEventListener("submit", function(e){
     e.preventDefault();
-    if (saveSettings()) {
-      document.getElementById("settings-form").classList.toggle("invisible");
-      document.getElementById("table").classList.toggle("invisible");
-      settings = loadSettings();
-      getDepartures();
+    document.getElementById("settings-form").classList.toggle("invisible");
+    document.getElementById("table").classList.toggle("invisible");
+    saveSettings(defaultSettings);
+    if (settings = loadSettings()) {
+      getDepartures(null);
     }
   });
 
   // go!
-  if (settings = loadSettings()) {
-    getDepartures();
+  if (settings = loadSettings(defaultSettings)) {
+    console.log("OK, go!")
+    getAccessToken(getDepartures(null));
   } else {
     console.log("No init!")
     document.getElementById("welcome").classList.remove("invisible");

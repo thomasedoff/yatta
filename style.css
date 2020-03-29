@@ -121,13 +121,12 @@ input {
   margin: 0.25em;
 }
 
-#apiKey {
+#apiKey, #stopName {
   flex-grow: 1;
 }
-#apiKeyHelper {
+#apiKeyHelper, #stopNameHelper {
   cursor: pointer;
-  border-bottom: 0;
-  width: 4em;
+  width: 1.8295em;
 }
 
 #submit, button {

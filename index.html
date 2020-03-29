@@ -34,6 +34,7 @@
         <p>Welcome to Yet Another Time Table Application.</p>
         <p>This app shows real time information on Västtrafik departures for a given stop (similar to the "Nästa tur" digital displays).</p>
         <p>Click the menu bar in the upper-left corner to configure what stop, lines and tracks to monitor.</p>
+        <p>Visit the <a href="https://github.com/thomasedoff/yatta/">repo</a> for more information.</p>
       </div>
       <table id="table"></table>
       <form id="settings-form" class="invisible">
@@ -41,16 +42,20 @@
           <h2>Settings</h2>
           <label for="apiKey">API Key</label>
           <div class="setting--row">
-            <input id="apiKey" type="text" name="apiKey" pattern="[A-z0-9]{76}" value="" required="required">
-            <input id="apiKeyHelper" type="button" value="Verify">
+            <input id="apiKey" type="text" name="apiKey" pattern="[A-z0-9]{76}" value="eUdRM0JjQXB4cDIxc0wxcWlhRjFrNTdaWG9NYTp4VG1GSTRYS3Nrakw4bVowRWF0RzNReFlEX2dh" required="required">
+            <input id="apiKeyHelper" type="button" value="✗" disabled="disabled">
           </div>
+          <input id="deviceId" type="hidden" name="deviceId" required="required" disabled="disabled">
           <span id="apiKeyHelper-normal" class="helper">76-character Västtrafik API key</span>
         </div>
         <div class="setting">
           <label for="stopName">Stop name</label>
-          <input id="stopName" name="suggestions" list="locations" placeholder="SKF, Göteborg" required="required">
-          <datalist id="locations"></datalist>
-          <input id="stopId" type="text" name="stopId" pattern="[0-9]{16}" placeholder="" required="required" disabled="disabled">
+          <div class="setting--row">
+            <input id="stopName" name="suggestions" list="locations" placeholder="Centralstationen, Göteborg" required="required">
+            <datalist id="locations"></datalist>
+            <input id="stopNameHelper" type="button" value="✗" disabled="disabled">
+          </div>
+          <input id="stopId" type="hidden" name="stopId" pattern="[0-9]{16}" placeholder="" required="required" disabled="disabled">
           <span class="helper">Name of stop to monitor</span>
         </div>
         <div class="setting">
