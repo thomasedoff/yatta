@@ -7,14 +7,14 @@ const defaultSettings = {
   "lines": [],
   "tracks": [],
   "maxRows": 10,
-  "updateInterval": 30
+  "updateInterval": 30,
+  "timeZone": "Europe/Stockholm"
 }
 
 
 // Authenticate to VT API
 getAccessToken = function(callback) {
   console.log("getAccessToken");
-  console.log(settings);
   var xhr = new XMLHttpRequest();
   xhr.open("POST", "https://api.vasttrafik.se:443/token");
   xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
@@ -38,6 +38,7 @@ getAccessToken = function(callback) {
 
 // Fetch stops
 getStops = function(stopName) {
+  console.log("getStops");
   var xhr = new XMLHttpRequest();
   xhr.open("GET", "https://api.vasttrafik.se/bin/rest.exe/v2/location.name?input=" + stopName + "&format=json");
   xhr.setRequestHeader("Authorization", "Bearer " + localStorage.getItem("accessToken"));
@@ -46,7 +47,7 @@ getStops = function(stopName) {
   xhr.addEventListener("loadend", function() {
     var json = JSON.parse(xhr.response);
     if (xhr.status === 401) {
-      getAccessToken(null);
+      getAccessToken(getStops);
     } else if (xhr.status === 200 && Array.isArray(json.LocationList.StopLocation)) {
       generateDataList(json.LocationList.StopLocation);
     } else {
@@ -59,9 +60,11 @@ getStops = function(stopName) {
 getDepartures = function() {
   console.log("getDepartures");
   if (settings.blinkClock) document.getElementById("clock").innerText = "--:--";
+  var date = moment().tz(settings.timeZone).format("YYYY-MM-DD");
+  var time = moment().tz(settings.timeZone).format("HH:mm");
 
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=" + settings.stopId + "&date=" + moment().format("YYYY-MM-DD") + "&time=" + moment().format("HH:mm") + "&maxdeparturesPerLine=2&format=json");
+  xhr.open("GET", "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=" + settings.stopId + "&date=" + date + "&time=" + time + "&maxdeparturesPerLine=2&format=json");
   xhr.setRequestHeader("Authorization", "Bearer " + localStorage.getItem("accessToken"));
   xhr.send(null);
 
@@ -143,8 +146,8 @@ generateDataList = function(locations) {
     document.getElementById("stopId").value = object.id;
     updateHelper(document.getElementById("stopNameHelper"), true);
   } else {
-      updateHelper(document.getElementById("stopNameHelper"), false);
-
+    document.getElementById("stopId").value = "";
+    updateHelper(document.getElementById("stopNameHelper"), false);
   }
 }
 
@@ -181,14 +184,18 @@ loadSettings = function(defaultSettings) {
   var settings = localStorage.getItem("settings") ? JSON.parse(localStorage.getItem("settings")) : defaultSettings;
     // Populate HTML fields
   for (var setting in settings) {
+    if (setting === "skipWelcome") continue;
     if (typeof settings[setting] === "boolean") document.getElementById(setting).checked = settings[setting];
     if (Array.isArray(settings[setting])) document.getElementById(setting).value = settings[setting].toString();
     if (typeof settings[setting] === "string" || typeof settings[setting] === "number") document.getElementById(setting).value = settings[setting];
   }
 
+  document.getElementById("dark").media = settings.darkTheme ? "" : "none";
+  if (document.getElementById("stopName").validity.valid && document.getElementById("stopId").validity.valid) updateHelper(document.getElementById("stopNameHelper"), true)
+
   clearInterval(window.loop);
   window.loop = setInterval(getDepartures, settings.updateInterval * 1000);
-  document.getElementById("dark").media = settings.darkTheme ? "" : "none";
+
   localStorage.setItem("settings", JSON.stringify(settings));
   return settings;
 }
@@ -197,11 +204,12 @@ loadSettings = function(defaultSettings) {
 saveSettings = function(defaultSettings) {
   console.log("saveSettings");
   var settings = {};
+  settings.skipWelcome = true;
+  settings.timeZone = defaultSettings.timeZone;
   settings.apiKey = document.getElementById("apiKey").value;
   settings.deviceId = localStorage.getItem("deviceId") || defaultSettings.deviceId;
-  settings.stopName = document.getElementById("stopName").value || defaultSettings.stopName;
-  settings.stopId = parseInt(document.getElementById("stopId").value) || defaultSettings.stopId;
-
+  settings.stopName = document.getElementById("stopName").value ? document.getElementById("stopName").value : defaultSettings.stopName;
+  settings.stopId = parseInt(document.getElementById("stopId").value) ? document.getElementById("stopId").value : defaultSettings.stopId;
   settings.lines = document.getElementById("lines").value ? document.getElementById("lines").value.replace(/\s+/, "").split(",") : defaultSettings.lines;
   settings.tracks = document.getElementById("tracks").value ? document.getElementById("tracks").value.toUpperCase().replace(/\s+/, "").split(",") : defaultSettings.tracks;
   settings.maxRows = parseInt(document.getElementById("maxRows").value) || defaultSettings.maxRows;
@@ -231,6 +239,19 @@ updateHelper = function(element, success) {
   }
 }
 
+// showElement
+showElement = function(targetElement) {
+  var elements = document.querySelectorAll('[data-toggleable]');
+  for (var element of elements) {
+    if (element === targetElement) {
+      targetElement.classList.remove("invisible");
+    } else {
+      element.classList.add("invisible");
+    }
+  }
+}
+
+
 /* EVENT LISTENERS */
 document.addEventListener("DOMContentLoaded", function() {
   // Safari doesn't support the fullscreen API?
@@ -248,9 +269,11 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // settings-form
   document.getElementById("settings-icon").addEventListener("click", function() {
-    document.getElementById("welcome").classList.add("invisible");
-    document.getElementById("settings-form").classList.toggle("invisible");
-    document.getElementById("table").classList.toggle("invisible");
+    if (document.getElementById("settings-form").classList.contains("invisible")) {
+      showElement(document.getElementById("settings-form"));
+    } else {
+      showElement(document.getElementById("table"));
+    }
   });
 
   // apiKey
@@ -263,7 +286,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
   // stopName
   document.getElementById("stopName").addEventListener("input", function(e) {
-    if (localStorage.getItem("accessToken") && this.validity.valid) {
+    if (this.validity.valid) {
       getStops(this.value);
     }
   });
@@ -271,21 +294,14 @@ document.addEventListener("DOMContentLoaded", function() {
   // save
   document.getElementById("settings-form").addEventListener("submit", function(e){
     e.preventDefault();
-    document.getElementById("settings-form").classList.toggle("invisible");
-    document.getElementById("table").classList.toggle("invisible");
     saveSettings(defaultSettings);
     if (settings = loadSettings()) {
+      showElement(document.getElementById("table"));
       getDepartures(null);
     }
   });
 
   // go!
-  if (settings = loadSettings(defaultSettings)) {
-    console.log("OK, go!")
-    getAccessToken(getDepartures(null));
-  } else {
-    console.log("No init!")
-    document.getElementById("welcome").classList.remove("invisible");
-    document.getElementById("table").classList.remove("invisible");
-  }
+  if (settings = loadSettings(defaultSettings)) getAccessToken(getDepartures(null));
+  if (!settings.skipWelcome) showElement(document.getElementById("welcome"));
 });
