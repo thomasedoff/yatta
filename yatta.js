@@ -1,4 +1,4 @@
-// Default settings
+// Default settings (with my secret, whoops!)
 const defaultSettings = {
   "apiKey": "eUdRM0JjQXB4cDIxc0wxcWlhRjFrNTdaWG9NYTp4VG1GSTRYS3Nrakw4bVowRWF0RzNReFlEX2dh",
   "deviceId": Math.random().toString(36).substr(2, 9),
@@ -10,7 +10,6 @@ const defaultSettings = {
   "updateInterval": 30,
   "timeZone": "Europe/Stockholm"
 }
-
 
 // Authenticate to VT API
 getAccessToken = function(callback) {
@@ -66,7 +65,7 @@ getDepartures = function() {
   var time = moment().tz(settings.timeZone).format("HH:mm");
 
   var xhr = new XMLHttpRequest();
-  xhr.open("GET", "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=" + settings.stopId + "&date=" + date + "&time=" + time + "&maxdeparturesPerLine=2&format=json");
+  xhr.open("GET", "https://api.vasttrafik.se/bin/rest.exe/v2/departureBoard?id=" + settings.stopId + "&date=" + date + "&time=" + time + "&timeSpan=60&maxDeparturesPerLine=2&format=json");
   xhr.setRequestHeader("Authorization", "Bearer " + localStorage.getItem("accessToken"));
   xhr.send(null);
 
@@ -75,7 +74,7 @@ getDepartures = function() {
     if (xhr.status === 401) {
       getAccessToken(getDepartures);
     } else if (xhr.status === 200 && !json.DepartureBoard.error) {
-      sortDepartures(json.DepartureBoard);
+      filterDepartures(json.DepartureBoard);
     } else {
       console.log("No departures!")
     }
@@ -83,53 +82,45 @@ getDepartures = function() {
 };
 
 // Filter matching departures
-sortDepartures = function(allDepartures) {
-  console.log("sortDepartures")
-  var ServerDatetime = moment(allDepartures.serverdate + " " + allDepartures.servertime, "YYYY-MM-DD HH:mm");
+filterDepartures = function(allDepartures) {
+  console.log("filterDepartures")
+  var serverTime = moment(allDepartures.serverdate + " " + allDepartures.servertime, "YYYY-MM-DD HH:mm");
   var filteredDepartures = [];
-  var i = 0;
   for (var departure in allDepartures.Departure) {
-    // Use rtTime if exists, calculate minutes left, use specified format
-    var dynamicTime = allDepartures.Departure[departure].rtTime ? allDepartures.Departure[departure].rtTime : allDepartures.Departure[departure].time;
-    var absoluteDepartureDatetime = moment(allDepartures.Departure[departure].date + " " + dynamicTime, "YYYY-MM-DD HH:mm")
-    var relativedepartureTime = parseInt(moment.duration(absoluteDepartureDatetime.diff(ServerDatetime)).asMinutes());
-    var departureTime = settings.absoluteTime ? dynamicTime : relativedepartureTime;
+    var departure = allDepartures.Departure[departure];
+
+    // Use rtTime if exists and create relative time
+    var absoluteDepartureTime = departure.rtTime ? departure.rtTime : departure.time;
+    var relativeDepartureTime = parseInt(moment.duration(moment(departure.date + " " + absoluteDepartureTime, "YYYY-MM-DD HH:mm").diff(serverTime)).asMinutes());
 
     // Only traverse departures on specific tracks
     if (
-      (settings.tracks.includes(allDepartures.Departure[departure].track) || settings.tracks.length === 0) &&
-      (settings.lines.includes(allDepartures.Departure[departure].sname) || settings.lines.length === 0) &&
-      (i < settings.maxRows || !settings.maxRows)
+      (settings.tracks.includes(departure.track) || settings.tracks.length === 0) &&
+      (settings.lines.includes(departure.sname) || settings.lines.length === 0) &&
+      !departure.cancelled
     ) {
-      if (!settings.absoluteTime && departureTime <= 0) departureTime = "Now";
-      if (allDepartures.Departure[departure].cancelled) departureTime = "Cancelled"
 
-      if (settings.groupDepartures) {
-        // Append to existing line if it already exists
-        var object = filteredDepartures.find(o => o.Line === allDepartures.Departure[departure].sname) && filteredDepartures.find(o => o.Destination === allDepartures.Departure[departure].direction);
-        if (object && object.Next === "") object.Next = departureTime;
-        if (!object) {
-          filteredDepartures.push({"Line": allDepartures.Departure[departure].sname,
-                          "Destination": allDepartures.Departure[departure].direction,
-                          "Departure": departureTime, "Next": "",
-                          "Track": allDepartures.Departure[departure].track,
-                          "color": allDepartures.Departure[departure].bgColor,
-                          "background": allDepartures.Departure[departure].fgColor}
-                        );
-        }
+      // Append to objects that already exist
+      if (settings.groupDepartures && (object = filteredDepartures.find((o => o.Line === departure.sname && o.Destination === departure.direction)))) {
+        object.relativeNext = relativeDepartureTime;
+        object.absoluteNext = absoluteDepartureTime;
+
+      // Otherwise create new
       } else {
-        // Otherwise simply populate with current
-        filteredDepartures.push({"Line": allDepartures.Departure[departure].sname,
-                        "Destination": allDepartures.Departure[departure].direction,
-                        "Departure": departureTime,
-                        "Track": allDepartures.Departure[departure].track,
-                        "color": allDepartures.Departure[departure].bgColor,
-                        "background": allDepartures.Departure[departure].fgColor});
+        filteredDepartures.push({
+          "Line": departure.sname,
+          "Destination": departure.direction,
+          "absoluteDeparture": absoluteDepartureTime,
+          "relativeDeparture": relativeDepartureTime,
+          "absoluteNext": "",
+          "relativeNext": "",
+          "Track": departure.track,
+          "color": departure.bgColor,
+          "background": departure.fgColor
+        });
       }
-      i++;
     }
   };
-
   document.getElementById("clock").innerText = allDepartures.servertime;
   generateTable(filteredDepartures);
 }
@@ -156,6 +147,12 @@ generateDataList = function(locations) {
 // Generate HTML table
 generateTable = function(departures) {
   console.log("generateTable");
+
+  // Move next departure to top
+  departures.sort(function(x, y) {
+    return (x.relativeDeparture - y.relativeDeparture)
+  });
+
   var tbody = "<tbody><tr><th>Line</th>"
   if (settings.showDestinations) tbody += "<th>Destination</th>";
   tbody += "<th>Departure</th>";
@@ -164,16 +161,29 @@ generateTable = function(departures) {
   tbody += "</tr></tbody>"
 
   var columns = ""
+  var i = 0;
+
   for (departure of departures) {
-    // Use VT colors
-    var divStyle = "background: " + departure.background + "; color:" + departure.color;
-    var spanClass = departure.Line.length > 2 ? "Line--small" : "";
-    columns += "<tr><td><div class='Line' style='" + divStyle + "'><span class='" + spanClass + "'>" + departure.Line + "</span></div></td>";
-    if (settings.showDestinations) columns += "<td>" + departure.Destination + "</td>";
-    columns += "<td>" + departure.Departure + "</td>";
-    if (settings.groupDepartures) columns +=  "<td><span>" + departure.Next + "</span></td>";
-    if (settings.showTracks) columns += "<td>" + departure.Track + "</td>";
-    columns += "</tr>"
+    if (settings.absoluteTime) {
+      var departureTime = departure.absoluteDeparture;
+      var nextTime = departure.absoluteNext;
+    } else {
+      var departureTime = departure.relativeDeparture;
+      var nextTime = departure.relativeNext;
+    }
+    if (!settings.absoluteTime && departureTime <= 0) departureTime = "Now";
+
+    if (i < settings.maxRows || !settings.maxRows) {
+      var divStyle = "background: " + departure.background + "; color:" + departure.color;
+      var spanClass = departure.Line.length > 2 ? "Line--small" : "";
+      columns += "<tr><td><div class='Line' style='" + divStyle + "'><span class='" + spanClass + "'>" + departure.Line + "</span></div></td>";
+      if (settings.showDestinations) columns += "<td>" + departure.Destination + "</td>";
+      columns += "<td>" + departureTime + "</td>";
+      if (settings.groupDepartures) columns +=  "<td><span>" + nextTime + "</span></td>";
+      if (settings.showTracks) columns += "<td>" + departure.Track + "</td>";
+      columns += "</tr>";
+      i++;
+    }
   }
 
   tbody += "<tbody>" + columns + "</tbody>";
@@ -205,7 +215,6 @@ loadSettings = function(defaultSettings) {
 // Save settings
 saveSettings = function(defaultSettings) {
   console.log("saveSettings");
-  var settings = {};
   settings.skipWelcome = true;
   settings.timeZone = defaultSettings.timeZone;
   settings.apiKey = document.getElementById("apiKey").value;
@@ -214,8 +223,8 @@ saveSettings = function(defaultSettings) {
   settings.stopId = parseInt(document.getElementById("stopId").value) ? document.getElementById("stopId").value : defaultSettings.stopId;
   settings.lines = document.getElementById("lines").value ? document.getElementById("lines").value.replace(/\s+/, "").split(",") : defaultSettings.lines;
   settings.tracks = document.getElementById("tracks").value ? document.getElementById("tracks").value.toUpperCase().replace(/\s+/, "").split(",") : defaultSettings.tracks;
-  settings.maxRows = parseInt(document.getElementById("maxRows").value) || defaultSettings.maxRows;
-  settings.updateInterval = parseInt(document.getElementById("updateInterval").value) || defaultSettings.updateInterval;
+  settings.maxRows = parseInt(document.getElementById("maxRows").value) ? document.getElementById("maxRows").value : defaultSettings.maxRows;
+  settings.updateInterval = parseInt(document.getElementById("updateInterval").value) ? document.getElementById("updateInterval").value : defaultSettings.updateInterval;
 
   // These defaults are set in index.html
   settings.blinkClock = document.getElementById("blinkClock").checked ? true : false;
@@ -252,7 +261,6 @@ showElement = function(targetElement) {
     }
   }
 }
-
 
 /* EVENT LISTENERS */
 document.addEventListener("DOMContentLoaded", function() {
