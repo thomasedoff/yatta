@@ -60,6 +60,8 @@ getStops = function(stopName) {
 getDepartures = function() {
   console.log("getDepartures");
   if (settings.blinkClock) document.getElementById("clock").innerText = "--:--";
+  // Quickfix for old settings
+  if (!settings.timeZone) settings.timeZone = "Europe/Stockholm";
   var date = moment().tz(settings.timeZone).format("YYYY-MM-DD");
   var time = moment().tz(settings.timeZone).format("HH:mm");
 
