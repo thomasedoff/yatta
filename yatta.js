@@ -101,7 +101,10 @@ filterDepartures = function(allDepartures) {
     ) {
 
       // Append to objects that already exist
-      if (settings.groupDepartures && (object = filteredDepartures.find((o => o.Line === departure.sname && o.Destination === departure.direction)))) {
+      if (settings.groupDepartures && (object = filteredDepartures.find((
+          o => o.Line === departure.sname &&
+          o.Destination === departure.direction
+        )))) {
         object.relativeNext = relativeDepartureTime;
         object.absoluteNext = absoluteDepartureTime;
 
@@ -148,7 +151,7 @@ generateDataList = function(locations) {
 generateTable = function(departures) {
   console.log("generateTable");
 
-  // Move next departure to top
+  // Sort by time to departure
   departures.sort(function(x, y) {
     return (x.relativeDeparture - y.relativeDeparture)
   });
@@ -162,7 +165,6 @@ generateTable = function(departures) {
 
   var columns = ""
   var i = 0;
-
   for (departure of departures) {
     if (settings.absoluteTime) {
       var departureTime = departure.absoluteDeparture;
@@ -194,6 +196,13 @@ generateTable = function(departures) {
 loadSettings = function(defaultSettings) {
   console.log("loadSettings");
   var settings = localStorage.getItem("settings") ? JSON.parse(localStorage.getItem("settings")) : defaultSettings;
+
+  // It only takes 5 minutes
+  if (window.location.hostname !== "thomasedoff.github.io" && settings.apiKey.includes("eUdRM0JjQXB4cDIxc0wxcWlhRjFrNTdaWG9NY")) {
+    alert("Create your own API key for Västtrafik's API: https://developer.vasttrafik.se/portal/#/guides/get-started");
+    throw new Error("Create your own API key for Västtrafik's API: https://developer.vasttrafik.se/portal/#/guides/get-started");
+  }
+
     // Populate HTML fields
   for (var setting in settings) {
     if (setting === "skipWelcome") continue;
