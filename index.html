@@ -5,6 +5,7 @@
     <title>YATTA - Yet Another Time Table App</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--
+    manifest.json appears to be enough
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     -->
@@ -43,7 +44,7 @@
           <h2>Settings</h2>
           <label for="apiKey">API key (required)</label>
           <div class="setting--row">
-            <input id="apiKey" type="text" name="apiKey" pattern=".{76,}" value="eUdRM0JjQXB4cDIxc0wxcWlhRjFrNTdaWG9NYTp4VG1GSTRYS3Nrakw4bVowRWF0RzNReFlEX2dh" required="required">
+            <input id="apiKey" type="text" name="apiKey" pattern=".{76,}" required="required">
             <input id="apiKeyHelper" type="button" value="✗" disabled="disabled">
           </div>
           <input id="timeZone" type="hidden" name="timeZone" required="required" disabled="disabled">
