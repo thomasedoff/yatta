@@ -3,7 +3,7 @@ This app shows real time information on Västtrafik departures for a given stop 
 
 ![YATTA on a PC](https://user-images.githubusercontent.com/51061686/78002588-c264c180-7337-11ea-8df7-4518035e17d4.png)
 
-To use the app, visit [thomasedoff.github.io/yatta](https://thomasedoff.github.io/yatta/).
+**To use the app, visit [thomasedoff.github.io/yatta](https://thomasedoff.github.io/yatta/).**
 
 ## Instructions
 Visit the above link on any device, go to settings and search for the name of your stop (eg: `Centralstationen, Göteborg`), then save the settings. Initially, all lines on any track to any destination will be displayed. You can control what is displayed by specifying what tracks and lines to monitor in the settings.
