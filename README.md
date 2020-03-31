@@ -20,4 +20,4 @@ There are also some optional settings that you can play with in order to find a 
 ## More information
 The app queries Västtrafik's [Reseplaneraren v2 API](https://developer.vasttrafik.se/portal/#/api/Reseplaneraren/v2/landerss) to search for stops and departures. If available, YATTA will display the estimated (real-time) departure time rather than scheduled departure time.
 
-If you wish to host a local copy of this app, or fork this repo, please [create your own API key](https://developer.vasttrafik.se/portal/#/guides/get-started) for Västtrafik's API.
+**If you wish to host a local copy of this app or make any changes to the code, you MUST [create your own API key](https://developer.vasttrafik.se/portal/#/guides/get-started) for Västtrafik's API.**
