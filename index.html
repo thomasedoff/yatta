@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <title>YATTA - Yet Another Time Table App</title>
@@ -18,26 +18,28 @@
     <script src="./vendor/moment/moment-timezone-with-data-10-year-range.min.js"></script>
     <script src="./yatta.js"></script>
   </head>
-  <body>
+  
+<body>
     <div class="wrapper">
-      <div class="header">
-        <div class="left">
+      <header>
+        <section>
           <span id="settings-icon" title="Settings">☰</span>
-        </div>
-        <div class="center">
+        </section>
+        <main>
           <span id="clock">--:--</span>
-        </div>
-        <div class="right">
+        </main>
+        <aside>
           <span id="fullscreen-icon" class="hidden" title="Fullscreen">▢</span>
-        </div>
-      </div>
-      <div id="welcome" data-toggleable="true" class="invisible">
+        </aside>
+      </header>
+      
+    <div id="welcome" data-toggleable="true" class="invisible">
         <h1>YATTA</h1>
         <p>Welcome to Yet Another Time Table Application.</p>
         <p>This app shows real time information on Västtrafik departures for a given stop (similar to the "Nästa tur" digital displays).</p>
         <p>Click the menu bar in the upper-left corner to configure what stop, lines and tracks to monitor.</p>
         <p>Visit the <a href="https://github.com/thomasedoff/yatta/">Github repo</a> for more information.</p>
-      </div>
+    </div>
       <table id="table" data-toggleable="true"></table>
       <form id="settings-form" data-toggleable="true" class="invisible">
         <div class="setting">
@@ -104,6 +106,8 @@
         </div>
         <div class="setting setting--row">
           <input id="darkTheme" type="checkbox" name="darkTheme">
+    
+            
           <label for="darkTheme">Use dark theme</label>
         </div>
         <div class="setting">
@@ -112,3 +116,4 @@
       </form>
     </div>
   </body>
+</html>
