@@ -1,164 +1,164 @@
 /* COMMON */
 
-html {
-  overflow-y: scroll;
+html{
+    overflow-y: scroll;
 }
 
-body {
-  font-family: verdana;
-  font-size: calc(1em + 1vw); /* 2.016vw = 192px lines */
-  padding-top: 4vh;
-  box-sizing: border-box;
-  margin: 0 auto;
+body{
+    font-family: verdana;
+    font-size: calc(1em + 1vw); /* 2.016vw = 192px lines. */
+    padding-top: 4vh;
+    box-sizing: border-box;
+    margin: 0 auto;
 }
 
-.wrapper {
-  display: flex;
-  flex-direction: column;
+.wrapper{
+    display: flex;
+    flex-direction: column;
 }
 
-/* HEADER */
+/* LAYOUT */
 
-.header {
-  display: flex;
+header{
+    display: flex;
 }
 
-.left, .center, .right {
-  display: flex;
-  flex: 1;
-  align-items: center;
-  justify-content: center;
+section, main, aside{
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
 }
 
-#welcome {
-  margin: 1.75em;
+#welcome{
+    margin: 1.75em;
 }
 
-#clock {
-  font-size: 2em;
-  cursor: pointer;
+#clock{
+    font-size: 2em;
+    cursor: pointer;
 }
 
-#settings-icon, #fullscreen-icon {
-  cursor: pointer;
-  font-size: 1.5em;
+#settings-icon, #fullscreen-icon{
+    cursor: pointer;
+    font-size: 1.5em;
 }
 
 /* DEPARTURES */
 
-table {
-  width: 100%;
-  table-layout: fixed;
-  border-spacing: 0;
+table{
+    width: 100%;
+    table-layout: fixed;
+    border-spacing: 0;
 }
 
-tr {
-  line-height: 3em;
+tr{
+    line-height: 3em;
 }
 
-th {
-  font-size: 0.75em;
-  line-height: 2.5em;
+th{
+    font-size: 0.75em;
+    line-height: 2.5em;
 }
 
-td {
-  text-align: center;
-  font-size: 1.5em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+td{
+    text-align: center;
+    font-size: 1.5em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.invisible {
-  display: none;
+.invisible{
+    display: none;
 }
 
 /* SETTINGS */
 
-#settings-form {
-  margin: 0 1em;
+#settings-form{
+    margin: 0 1em;
 }
 
-.setting {
-  display: flex;
-  flex-grow: 1;
-  flex-direction: column;
-  margin-bottom: 1.5em;
+.setting{
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    margin-bottom: 1.5em;
 }
 
-.setting--row {
-  display: flex;
-  flex-direction: row;
-  margin-bottom: 0.5em;
+.setting--row{
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0.5em;
 }
 
-.setting--row > label {
-  margin-left: 0.25em;
-  font-weight: 400;
+.setting--row > label{
+    margin-left: 0.25em;
+    font-weight: 400;
 }
 
-.helper {
-  margin-left: 0.75em;
+.helper{
+    margin-left: 0.75em;
 }
 
-.helper--success {
-  color: #3aaa3d;
+.helper--success{
+    color: #3aaa3d;
 }
 
-.helper--failure {
-  color: #e92d01;
+.helper--failure{
+    color: #e92d01;
 }
 
-label {
-  margin-left: 0.75em;
-  font-weight: 600;
+label{
+    margin-left: 0.75em;
+    font-weight: 600;
 }
 
-input {
-  border: 0;
-  font-size: 1em;
-  padding: 0.25em 0.5em;
-  margin: 0.25em;
+input{
+    border: 0;
+    font-size: 1em;
+    padding: 0.25em 0.5em;
+    margin: 0.25em;
 }
 
-#apiKey, #stopName {
-  flex-grow: 1;
+#apiKey, #stopName{
+    flex-grow: 1;
 }
-#apiKeyHelper, #stopNameHelper {
-  cursor: pointer;
-  width: 1.8295em;
+#apiKeyHelper, #stopNameHelper{
+    cursor: pointer;
+    width: 1.8295em;
 }
 
-#submit, button {
-  border: 0;
-  font-weight: bold;
-  cursor: pointer;
-  border-radius: 0.5em;
-  padding: 0.5em;
+#submit, button{
+    border: 0;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 0.5em;
+    padding: 0.5em;
 }
 
 /*  LINES */
 
-.Line {
-  margin: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 1.5em;
-  width: 1.5em;
-  border-radius: 0.25em;
+.Line{
+    margin: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.5em;
+    width: 1.5em;
+    border-radius: 0.25em;
 }
 
-.Line > span {
-  font-size: 1em;
+.Line > span{
+    font-size: 1em;
 }
 
-.Line--small {
-  font-size: 0.5em !important;
+.Line--small{
+    font-size: 0.5em !important;
 }
 
 /* MISC */
 
-.hidden {
-  visibility: hidden;
+.hidden{
+    visibility: hidden;
 }
