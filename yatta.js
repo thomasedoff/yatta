@@ -118,8 +118,8 @@ filterDepartures = function(allDepartures) {
           "absoluteNext": "",
           "relativeNext": "",
           "Track": departure.track,
-          "color": departure.bgColor,
-          "background": departure.fgColor
+          "color": departure.fgColor,
+          "background": departure.bgColor
         });
       }
     }
